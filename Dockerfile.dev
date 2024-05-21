@@ -1,6 +1,37 @@
-FROM node:18-alpine3.18
-RUN npm i -g ts-node ts-node-dev
-RUN mkdir -p /home/app
-EXPOSE 3050
+# Base stage for shared environment setup and dependencies
+FROM node:18-alpine3.18 as base
+
+# Setup work directory
 WORKDIR /home/app
-CMD ["ts-node-dev","src/index.ts"]
+
+# Install global packages
+RUN npm install -g ts-node ts-node-dev
+
+# Copy dependency files
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+
+# Stage for installing dependencies
+FROM base as dependencies
+# Install dependencies based on the available lock file
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i; \
+  # Allow install without lockfile, so example works even without Node.js installed locally
+  else echo "Warning: Lockfile not found. It is recommended to commit lockfiles to version control." && npm install; \
+  fi
+
+COPY yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+
+# Final stage for the production build
+FROM base as release
+# Copy installed dependencies from previous stage
+COPY --from=dependencies /home/app/node_modules ./node_modules
+# Copy the rest of the application code
+COPY . .
+
+# Expose the port the app runs on
+EXPOSE 3050
+
+# Command to run the application
+CMD ["ts-node-dev", "src/index.ts"]
