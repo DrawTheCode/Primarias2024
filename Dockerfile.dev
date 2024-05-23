@@ -17,19 +17,18 @@ FROM base as dependencies
 ARG UID=1000
 ARG GID=1000
 
-# Create a non-root user and group with the specified UID and GID
-RUN addgroup -g ${GID} appgroup && \
-    adduser -D -u ${UID} -G appgroup appuser
+# Modify the existing node user and group to use the specified UID and GID
+RUN groupmod -g "${GID}" node && usermod -u "${UID}" -g "${GID}" node \
+    && mkdir -p /home/app && chown node:node -R /home/app
 
-# Set user to appuser
-USER appuser
+# Set user to node
+USER node
 
 # Install dependencies based on the available lock file
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
   elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i; \
-  # Allow install without lockfile, so example works even without Node.js installed locally
   else echo "Warning: Lockfile not found. It is recommended to commit lockfiles to version control." && npm install; \
   fi
 
@@ -43,12 +42,12 @@ FROM base as development
 ARG UID=1000
 ARG GID=1000
 
-# Create a non-root user and group with the specified UID and GID
-RUN addgroup -g ${GID} appgroup && \
-    adduser -D -u ${UID} -G appgroup appuser
+# Modify the existing node user and group to use the specified UID and GID
+RUN groupmod -g "${GID}" node && usermod -u "${UID}" -g "${GID}" node \
+    && mkdir -p /home/app && chown node:node -R /home/app
 
-# Set user to appuser
-USER appuser
+# Set user to node
+USER node
 
 # Copy installed dependencies from previous stage
 COPY --from=dependencies /home/app/node_modules ./node_modules
