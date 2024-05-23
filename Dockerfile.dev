@@ -55,6 +55,8 @@ USER node
 # Copy installed dependencies from previous stage
 COPY --from=dependencies /home/app/node_modules ./node_modules
 
+RUN chown -R node:node /home/app/node_modules
+
 # Copy the rest of the application code
 COPY . .
 
