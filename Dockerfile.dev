@@ -1,6 +1,9 @@
 # Use the base node image
 FROM node:18-alpine3.18 as base
 
+# Install shadow package for groupmod and usermod commands
+RUN apk add --no-cache shadow
+
 # Create app directory
 WORKDIR /home/app
 
