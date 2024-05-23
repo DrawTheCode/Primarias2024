@@ -1,15 +1,27 @@
+# Use the base node image
 FROM node:18-alpine3.18 as base
 
+# Create app directory
 WORKDIR /home/app
+
+# Create a non-root user and group
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
 # Install global packages
 RUN npm install -g ts-node ts-node-dev
+
+# Change ownership of the app directory to the non-root user
+RUN chown -R appuser:appgroup /home/app
+
+# Switch to the non-root user
+USER appuser
 
 # Copy dependency files
 COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 
 # Stage for installing dependencies
 FROM base as dependencies
+
 # Install dependencies based on the available lock file
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
@@ -19,12 +31,15 @@ RUN \
   else echo "Warning: Lockfile not found. It is recommended to commit lockfiles to version control." && npm install; \
   fi
 
+# Copy lock files again (if they changed during install)
 COPY yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 
 # Final stage for the development build
 FROM base as development
+
 # Copy installed dependencies from previous stage
 COPY --from=dependencies /home/app/node_modules ./node_modules
+
 # Copy the rest of the application code
 COPY . .
 
