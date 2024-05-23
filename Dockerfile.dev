@@ -23,6 +23,8 @@ COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 FROM base as dependencies
 
 # Install dependencies based on the available lock file
+USER appuser
+
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   elif [ -f package-lock.json ]; then npm ci; \
@@ -38,6 +40,8 @@ COPY yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 FROM base as development
 
 # Copy installed dependencies from previous stage
+USER appuser
+
 COPY --from=dependencies /home/app/node_modules ./node_modules
 
 # Copy the rest of the application code
