@@ -1,10 +1,8 @@
 FROM node:18-alpine3.18
+RUN npm install -g ts-node ts-node-dev
 RUN mkdir -p /home/app
-
-WORKDIR /home/app
-
 COPY . /home/app
-
+WORKDIR /home/app
 EXPOSE 3050
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
