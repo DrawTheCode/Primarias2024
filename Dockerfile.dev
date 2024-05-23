@@ -16,17 +16,6 @@ COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 # Stage for installing dependencies
 FROM base as dependencies
 
-# Build arguments for UID and GID
-ARG UID=1000
-ARG GID=1000
-
-# Modify the existing node user and group to use the specified UID and GID
-RUN groupmod -g "${GID}" node && usermod -u "${UID}" -g "${GID}" node \
-    && mkdir -p /home/app && chown node:node -R /home/app
-
-# Set user to node
-USER node
-
 # Install dependencies based on the available lock file
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
@@ -45,17 +34,10 @@ FROM base as development
 ARG UID=1000
 ARG GID=1000
 
-# Modify the existing node user and group to use the specified UID and GID
-RUN groupmod -g "${GID}" node && usermod -u "${UID}" -g "${GID}" node \
-    && mkdir -p /home/app && chown node:node -R /home/app
-
-# Set user to node
-USER node
-
 # Copy installed dependencies from previous stage
 COPY --from=dependencies /home/app/node_modules ./node_modules
 
-RUN chown -R node:node /home/app/node_modules
+RUN chown -R ${UID}:${GID} /home/app/node_modules
 
 # Copy the rest of the application code
 COPY . .
