@@ -13,6 +13,17 @@ COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 # Stage for installing dependencies
 FROM base as dependencies
 
+# Build arguments for UID and GID
+ARG UID=1000
+ARG GID=1000
+
+# Create a non-root user and group with the specified UID and GID
+RUN addgroup -g ${GID} appgroup && \
+    adduser -D -u ${UID} -G appgroup appuser
+
+# Set user to appuser
+USER appuser
+
 # Install dependencies based on the available lock file
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
@@ -27,6 +38,17 @@ COPY yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 
 # Final stage for the development build
 FROM base as development
+
+# Build arguments for UID and GID
+ARG UID=1000
+ARG GID=1000
+
+# Create a non-root user and group with the specified UID and GID
+RUN addgroup -g ${GID} appgroup && \
+    adduser -D -u ${UID} -G appgroup appuser
+
+# Set user to appuser
+USER appuser
 
 # Copy installed dependencies from previous stage
 COPY --from=dependencies /home/app/node_modules ./node_modules
