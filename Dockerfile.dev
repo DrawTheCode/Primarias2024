@@ -4,11 +4,4 @@ COPY . .
 EXPOSE 3050
 RUN npm install -g ts-node ts-node-dev
 
-RUN \
-  if [ -f yarn.lock ]; then yarn; \
-  elif [ -f package-lock.json ]; then npm install; \
-  elif [ -f pnpm-lock.yaml ]; then corepack enable pnpm && pnpm i; \
-  else echo "Warning: Lockfile not found. It is recommended to commit lockfiles to version control." && npm install; \
-  fi
-
-CMD ["ts-node-dev", "src/index.ts"]
+CMD [ "sh", "-c", "[ -d node_modules ] && ts-node-dev src/index.ts || (npm ci && ts-node-dev src/index.ts)" ]
