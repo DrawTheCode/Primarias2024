@@ -1,7 +1,5 @@
-# Base stage for shared environment setup and dependencies
 FROM node:18-alpine3.18 as base
 
-# Setup work directory
 WORKDIR /home/app
 
 # Install global packages
@@ -23,8 +21,8 @@ RUN \
 
 COPY yarn.lock* package-lock.json* pnpm-lock.yaml* ./
 
-# Final stage for the production build
-FROM base as release
+# Final stage for the development build
+FROM base as development
 # Copy installed dependencies from previous stage
 COPY --from=dependencies /home/app/node_modules ./node_modules
 # Copy the rest of the application code
