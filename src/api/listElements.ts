@@ -49,21 +49,24 @@ async function setRegisterRedis(key: string, data: string, expiry: number) {
   return null;
 }
 
-async function getRegisterRedis(key: string): Promise<string | null> {
+async function getRegisterRedis(
+  key: string,
+): Promise<{ data: string | null; ttl: number | undefined }> {
   if (REDIS_URL) {
     try {
       console.log('estamos aca');
       const client = await createClient({ url: `redis://${REDIS_URL}` })
         .on('error', err => console.log('Redis Client Error => ', err))
         .connect();
-      const result = await client.get(key);
+      const data = await client.get(key);
+      const ttl = await client.ttl(key);
       await client.disconnect();
-      return result;
+      return { data, ttl };
     } catch (error) {
       console.error('ERROR=>', error);
     }
   }
-  return null;
+  return { data: null, ttl: undefined };
 }
 
 function corsDefinitions(req: Request, res: Response) {
@@ -85,9 +88,9 @@ async function getCachedDataOrFetch(
 ): Promise<{ data: any; fromCache: boolean; ttl?: number }> {
   if (REDIS_URL) {
     if (!resetCache) {
-      const cachedData = await getRegisterRedis(key);
-      if (cachedData) {
-        return { data: JSON.parse(cachedData), fromCache: true };
+      const { data, ttl } = await getRegisterRedis(key);
+      if (data) {
+        return { data: JSON.parse(data), fromCache: true, ttl };
       }
     }
 
@@ -103,34 +106,34 @@ async function getCachedDataOrFetch(
 zoneDefinitions.get('/zones', async (req, res) => {
   corsDefinitions(req, res);
   const resetCache = req.query.resetCache === 'true';
-  const { data, fromCache } = await getCachedDataOrFetch(
+  const { data, fromCache, ttl } = await getCachedDataOrFetch(
     'zones',
     async () => zoneList,
     resetCache,
   );
-  res.send(JSON.stringify({ data, redis: fromCache }));
+  res.send(JSON.stringify({ data, redis: fromCache, ttl }));
 });
 
 zoneDefinitions.get('/elec', async (req, res) => {
   corsDefinitions(req, res);
   const resetCache = req.query.resetCache === 'true';
-  const { data, fromCache } = await getCachedDataOrFetch(
+  const { data, fromCache, ttl } = await getCachedDataOrFetch(
     'elections',
     async () => election,
     resetCache,
   );
-  res.send(JSON.stringify({ data, redis: fromCache }));
+  res.send(JSON.stringify({ data, redis: fromCache, ttl }));
 });
 
 zoneDefinitions.get('/ambit', async (req, res) => {
   corsDefinitions(req, res);
   const resetCache = req.query.resetCache === 'true';
-  const { data, fromCache } = await getCachedDataOrFetch(
+  const { data, fromCache, ttl } = await getCachedDataOrFetch(
     'ambit',
     async () => ambit,
     resetCache,
   );
-  res.send(JSON.stringify({ data, redis: fromCache }));
+  res.send(JSON.stringify({ data, redis: fromCache, ttl }));
 });
 
 listing.get('/files', async (req, res) => {
@@ -138,12 +141,12 @@ listing.get('/files', async (req, res) => {
   if (ftpPath) {
     corsDefinitions(req, res);
     const resetCache = req.query.resetCache === 'true';
-    const { data, fromCache } = await getCachedDataOrFetch(
+    const { data, fromCache, ttl } = await getCachedDataOrFetch(
       'files',
       async () => await getFileList(ftpPath),
       resetCache,
     );
-    res.send({ data, redis: fromCache });
+    res.send({ data, redis: fromCache, ttl });
   } else {
     res.status(400).send({ error: 'No hay ruta setteada en el sistema.' });
   }
@@ -152,67 +155,67 @@ listing.get('/files', async (req, res) => {
 listing.get('/not-copy', async (req, res) => {
   corsDefinitions(req, res);
   const resetCache = req.query.resetCache === 'true';
-  const { data, fromCache } = await getCachedDataOrFetch(
+  const { data, fromCache, ttl } = await getCachedDataOrFetch(
     'not-copy',
     async () => await checkNotCopyFiles(),
     resetCache,
   );
-  res.send({ data, redis: fromCache });
+  res.send({ data, redis: fromCache, ttl });
 });
 
 listing.get('/scenery/:zone', async (req, res) => {
   corsDefinitions(req, res);
   const resetCache = req.query.resetCache === 'true';
-  const { data, fromCache } = await getCachedDataOrFetch(
+  const { data, fromCache, ttl } = await getCachedDataOrFetch(
     `scenery-${req.params.zone}`,
     async () => await filterSchemasFile(req.params.zone),
     resetCache,
   );
-  res.send({ data, redis: fromCache });
+  res.send({ data, redis: fromCache, ttl });
 });
 
 listing.get('/data/:zone', async (req, res) => {
   corsDefinitions(req, res);
   const resetCache = req.query.resetCache === 'true';
-  const { data, fromCache } = await getCachedDataOrFetch(
+  const { data, fromCache, ttl } = await getCachedDataOrFetch(
     `data-${req.params.zone}`,
     async () => await getZoneInfo(req.params.zone),
     resetCache,
   );
-  res.send({ data, redis: fromCache });
+  res.send({ data, redis: fromCache, ttl });
 });
 
 listing.get('/data/:zone/filter/:type', async (req, res) => {
   corsDefinitions(req, res);
   const resetCache = req.query.resetCache === 'true';
-  const { data, fromCache } = await getCachedDataOrFetch(
+  const { data, fromCache, ttl } = await getCachedDataOrFetch(
     `data-${req.params.zone}-${req.params.type}`,
     async () => await getZoneInfoFilterByType(req.params.zone, req.params.type),
     resetCache,
   );
-  res.send({ data, redis: fromCache });
+  res.send({ data, redis: fromCache, ttl });
 });
 
 results.get('/all', async (req, res) => {
   corsDefinitions(req, res);
   const resetCache = req.query.resetCache === 'true';
-  const { data, fromCache } = await getCachedDataOrFetch(
+  const { data, fromCache, ttl } = await getCachedDataOrFetch(
     'results-all',
     async () => await getResultsSchema(),
     resetCache,
   );
-  res.send({ data, redis: fromCache });
+  res.send({ data, redis: fromCache, ttl });
 });
 
 results.get('/filter/:key/:value', async (req, res) => {
   corsDefinitions(req, res);
   const resetCache = req.query.resetCache === 'true';
-  const { data, fromCache } = await getCachedDataOrFetch(
+  const { data, fromCache, ttl } = await getCachedDataOrFetch(
     `results-${req.params.key}-${req.params.value}`,
     async () => await getResultOneFilter(req.params.key, req.params.value),
     resetCache,
   );
-  res.send({ data, redis: fromCache });
+  res.send({ data, redis: fromCache, ttl });
 });
 
 results.get(
@@ -220,7 +223,7 @@ results.get(
   async (req, res) => {
     corsDefinitions(req, res);
     const resetCache = req.query.resetCache === 'true';
-    const { data, fromCache } = await getCachedDataOrFetch(
+    const { data, fromCache, ttl } = await getCachedDataOrFetch(
       `results-${req.params.firstKey}-${req.params.firstValue}-${req.params.secondKey}-${req.params.secondValue}`,
       async () =>
         await getResultTwoFilter(
@@ -231,40 +234,40 @@ results.get(
         ),
       resetCache,
     );
-    res.send({ data, redis: fromCache });
+    res.send({ data, redis: fromCache, ttl });
   },
 );
 
 search.get('/by/:complexId', async (req, res) => {
   corsDefinitions(req, res);
   const resetCache = req.query.resetCache === 'true';
-  const { data, fromCache } = await getCachedDataOrFetch(
+  const { data, fromCache, ttl } = await getCachedDataOrFetch(
     `search-${req.params.complexId}`,
     async () => await getSearch(req.params.complexId),
     resetCache,
   );
-  res.send({ data, redis: fromCache });
+  res.send({ data, redis: fromCache, ttl });
 });
 
 search.get('/by/type/:typeZone', async (req, res) => {
   corsDefinitions(req, res);
   const resetCache = req.query.resetCache === 'true';
-  const { data, fromCache } = await getCachedDataOrFetch(
+  const { data, fromCache, ttl } = await getCachedDataOrFetch(
     `search-type-${req.params.typeZone}`,
     async () => await getSearchByType(req.params.typeZone),
     resetCache,
   );
-  res.send({ data, redis: fromCache });
+  res.send({ data, redis: fromCache, ttl });
 });
 
 search.get('/by/type/:typeZone/:idZone', async (req, res) => {
   corsDefinitions(req, res);
   const resetCache = req.query.resetCache === 'true';
-  const { data, fromCache } = await getCachedDataOrFetch(
+  const { data, fromCache, ttl } = await getCachedDataOrFetch(
     `search-type-${req.params.typeZone}-${req.params.idZone}`,
     async () =>
       await getSearchByTypeAndID(req.params.typeZone, req.params.idZone),
     resetCache,
   );
-  res.send({ data, redis: fromCache });
+  res.send({ data, redis: fromCache, ttl });
 });
