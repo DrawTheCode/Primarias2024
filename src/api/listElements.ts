@@ -1,4 +1,5 @@
 import express, { Request, Response } from 'express';
+import responseTime from 'response-time';
 import { configDotenv } from 'dotenv';
 import { zoneList } from '../config/zoneTypes';
 import {
@@ -24,6 +25,8 @@ export const zoneDefinitions = express.Router();
 export const listing = express.Router();
 export const results = express.Router();
 export const search = express.Router();
+
+search.use(responseTime());
 
 configDotenv();
 
