@@ -34,13 +34,13 @@ const accessCORS =
 const REDIS_URL =
   process.env.REDIS_URL !== undefined ? process.env.REDIS_URL : null;
 
-async function setRegisterRedis(key: string, data: string) {
+async function setRegisterRedis(key: string, data: string, expiry: number) {
   if (REDIS_URL) {
     try {
       const client = await createClient({ url: `redis://${REDIS_URL}` })
         .on('error', err => console.log('Redis Client Error', err))
         .connect();
-      await client.set(key, data);
+      await client.set(key, data, { EX: expiry });
       await client.disconnect();
     } catch (error) {
       console.error('ERROR=>', error);
@@ -92,7 +92,7 @@ async function getCachedDataOrFetch(
     }
 
     const freshData = await fetchFunction();
-    await setRegisterRedis(key, JSON.stringify(freshData));
+    await setRegisterRedis(key, JSON.stringify(freshData), expiry);
     return { data: freshData, fromCache: false };
   } else {
     const freshData = await fetchFunction();
