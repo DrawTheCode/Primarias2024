@@ -111,7 +111,7 @@ zoneDefinitions.get('/zones', async (req, res) => {
     async () => zoneList,
     resetCache,
   );
-  res.send(JSON.stringify({ data, redis: fromCache, ttl }));
+  res.json({ data, redis: fromCache, ttl });
 });
 
 zoneDefinitions.get('/elec', async (req, res) => {
@@ -122,7 +122,7 @@ zoneDefinitions.get('/elec', async (req, res) => {
     async () => election,
     resetCache,
   );
-  res.send(JSON.stringify({ data, redis: fromCache, ttl }));
+  res.json({ data, redis: fromCache, ttl });
 });
 
 zoneDefinitions.get('/ambit', async (req, res) => {
@@ -133,7 +133,7 @@ zoneDefinitions.get('/ambit', async (req, res) => {
     async () => ambit,
     resetCache,
   );
-  res.send(JSON.stringify({ data, redis: fromCache, ttl }));
+  res.json({ data, redis: fromCache, ttl });
 });
 
 listing.get('/files', async (req, res) => {
@@ -146,9 +146,9 @@ listing.get('/files', async (req, res) => {
       async () => await getFileList(ftpPath),
       resetCache,
     );
-    res.send({ data, redis: fromCache, ttl });
+    res.json({ data, redis: fromCache, ttl });
   } else {
-    res.status(400).send({ error: 'No hay ruta setteada en el sistema.' });
+    res.status(400).json({ error: 'No hay ruta setteada en el sistema.' });
   }
 });
 
@@ -160,7 +160,7 @@ listing.get('/not-copy', async (req, res) => {
     async () => await checkNotCopyFiles(),
     resetCache,
   );
-  res.send({ data, redis: fromCache, ttl });
+  res.json({ data, redis: fromCache, ttl });
 });
 
 listing.get('/scenery/:zone', async (req, res) => {
@@ -171,7 +171,7 @@ listing.get('/scenery/:zone', async (req, res) => {
     async () => await filterSchemasFile(req.params.zone),
     resetCache,
   );
-  res.send({ data, redis: fromCache, ttl });
+  res.json({ data, redis: fromCache, ttl });
 });
 
 listing.get('/data/:zone', async (req, res) => {
@@ -182,7 +182,7 @@ listing.get('/data/:zone', async (req, res) => {
     async () => await getZoneInfo(req.params.zone),
     resetCache,
   );
-  res.send({ data, redis: fromCache, ttl });
+  res.json({ data, redis: fromCache, ttl });
 });
 
 listing.get('/data/:zone/filter/:type', async (req, res) => {
@@ -193,7 +193,7 @@ listing.get('/data/:zone/filter/:type', async (req, res) => {
     async () => await getZoneInfoFilterByType(req.params.zone, req.params.type),
     resetCache,
   );
-  res.send({ data, redis: fromCache, ttl });
+  res.json({ data, redis: fromCache, ttl });
 });
 
 results.get('/all', async (req, res) => {
@@ -204,7 +204,7 @@ results.get('/all', async (req, res) => {
     async () => await getResultsSchema(),
     resetCache,
   );
-  res.send({ data, redis: fromCache, ttl });
+  res.json({ data, redis: fromCache, ttl });
 });
 
 results.get('/filter/:key/:value', async (req, res) => {
@@ -215,7 +215,7 @@ results.get('/filter/:key/:value', async (req, res) => {
     async () => await getResultOneFilter(req.params.key, req.params.value),
     resetCache,
   );
-  res.send({ data, redis: fromCache, ttl });
+  res.json({ data, redis: fromCache, ttl });
 });
 
 results.get(
@@ -234,7 +234,7 @@ results.get(
         ),
       resetCache,
     );
-    res.send({ data, redis: fromCache, ttl });
+    res.json({ data, redis: fromCache, ttl });
   },
 );
 
@@ -246,7 +246,7 @@ search.get('/by/:complexId', async (req, res) => {
     async () => await getSearch(req.params.complexId),
     resetCache,
   );
-  res.send({ data, redis: fromCache, ttl });
+  res.json({ data, redis: fromCache, ttl });
 });
 
 search.get('/by/type/:typeZone', async (req, res) => {
@@ -257,7 +257,7 @@ search.get('/by/type/:typeZone', async (req, res) => {
     async () => await getSearchByType(req.params.typeZone),
     resetCache,
   );
-  res.send({ data, redis: fromCache, ttl });
+  res.json({ data, redis: fromCache, ttl });
 });
 
 search.get('/by/type/:typeZone/:idZone', async (req, res) => {
@@ -269,5 +269,5 @@ search.get('/by/type/:typeZone/:idZone', async (req, res) => {
       await getSearchByTypeAndID(req.params.typeZone, req.params.idZone),
     resetCache,
   );
-  res.send({ data, redis: fromCache, ttl });
+  res.json({ data, redis: fromCache, ttl });
 });
